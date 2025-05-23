@@ -55,7 +55,7 @@ A simple Flask web app for managing student courses and grades.
 
 ## Usage
 
-- **Login** with any of the user ID and password or you can add yours.
+- **Login** with any of the given user ID and password or you can add yours.
 - **Add a course:** Enter a course name and a grade (0-100, digits only).
 - **Remove a course:** Click "Remove" next to a course.
 - **Logout:** Click the "Logout" button.
