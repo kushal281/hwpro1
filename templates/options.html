@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard</title>
+  <!-- Tailwind CSS CDN for styling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col items-center p-2">
+
+  <!-- Notification bar centered on screen -->
+  <div id="notification" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
+
+  <!-- Main container for the dashboard -->
+  <div class="bg-white shadow-md rounded-xl p-4 sm:p-6 w-full max-w-md sm:max-w-xl mt-8 sm:mt-10">
+    <!-- Header: Welcome message and Logout button -->
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+      <h2 class="text-2xl font-bold text-gray-800 text-center sm:text-left">
+        Welcome, <span id="studentName"></span>
+      </h2>
+      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded w-full sm:w-auto">
+        Logout
+      </button>
+    </div>
+
+    <!-- Student info and course list will be rendered here -->
+    <div id="studentInfo" class="mb-6 text-gray-700"></div>
+
+    <!-- Section to add a new course -->
+    <div class="border-t pt-4">
+      <h3 class="text-xl font-semibold mb-2 text-center sm:text-left">Add New Course</h3>
+      <div class="flex flex-col gap-2">
+        <input id="courseName" placeholder="Course Name" class="border p-2 rounded w-full" />
+        <input id="courseGrade" type="number" placeholder="Grade" class="border p-2 rounded w-full" />
+        <button onclick="addCourse()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full">
+          Add Course
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let pendingRemoveCourse = null;
+
+    // Show notification bar centered with message and color, and optional actions
+    function showNotification(message, type = "info", actions = null) {
+      const notification = document.getElementById("notification");
+      let bgColor = "bg-blue-500";
+      if (type === "success") bgColor = "bg-green-500";
+      else if (type === "error") bgColor = "bg-red-500";
+      notification.innerHTML = `
+        <div class="${bgColor} px-6 py-4 rounded shadow text-white text-center text-base font-medium max-w-xs w-full">
+          ${message}
+          ${actions ? actions : ""}
+        </div>
+      `;
+      notification.className = "fixed inset-0 flex items-center justify-center z-50";
+      notification.classList.remove("hidden");
+      if (!actions) {
+        setTimeout(() => {
+          notification.classList.add("hidden");
+        }, 2500);
+      }
+    }
+
+    // Get userid from localStorage; redirect to login if not found
+    const userid = localStorage.getItem("userid");
+    if (!userid) window.location.href = "/";
+
+    // Fetch student details and courses from the server
+    async function fetchDetails() {
+      const res = await fetch(`/record/${userid}`);
+      const data = await res.json();
+      if (data.name) {
+        document.getElementById("studentName").innerText = data.name;
+        let html = "<h3 class='text-lg font-semibold mb-2'>Courses:</h3>";
+        if (!data.grades || data.grades.length === 0) {
+          html += `
+            <div class="flex flex-col items-center justify-center py-8 animate-pulse">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m16-2v2a4 4 0 004 4h.01a4 4 0 004-4v-2m-8-4a4 4 0 100-8 4 4 0 000 8z" />
+              </svg>
+              <span class="text-gray-500 text-center font-medium">Oops! No course to display.<br>Add one below.</span>
+            </div>
+          `;
+        } else {
+          html += "<ul class='space-y-2'>";
+          data.grades.forEach(g => {
+            html += `
+              <li class="flex flex-col sm:flex-row justify-between items-center bg-gray-100 p-2 rounded gap-2">
+                <span>${g.course}: <strong>${g.grade}</strong></span>
+                <button onclick="removeCourse('${g.course}')" class="text-sm text-red-600 hover:text-red-800 w-full sm:w-auto">Remove</button>
+              </li>
+            `;
+          });
+          html += "</ul>";
+        }
+        document.getElementById("studentInfo").innerHTML = html;
+      }
+    }
+
+    // Add a new course for the student
+    async function addCourse() {
+      const course = document.getElementById("courseName").value;
+      const grade = parseInt(document.getElementById("courseGrade").value);
+      const res = await fetch(`/record/${userid}/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ course, grade })
+      });
+      const result = await res.json();
+      if (result.message) {
+        showNotification(result.message, "success");
+      } else {
+        showNotification(result.error || "Error adding course", "error");
+      }
+      fetchDetails();
+    }
+
+    // Remove a course for the student with custom confirmation
+    async function removeCourse(course) {
+      pendingRemoveCourse = course;
+      showNotification(
+        `Are you sure you want to remove '<b>${course}</b>'?`,
+        "error",
+        `<div class="mt-2 flex justify-center gap-2">
+          <button onclick="confirmRemoveCourse(true)" class="bg-white text-red-600 px-3 py-1 rounded font-semibold">Yes</button>
+          <button onclick="confirmRemoveCourse(false)" class="bg-white text-gray-700 px-3 py-1 rounded font-semibold">No</button>
+        </div>`
+      );
+    }
+
+    // Handle confirmation
+    async function confirmRemoveCourse(yes) {
+      const notification = document.getElementById("notification");
+      notification.classList.add("hidden");
+      if (yes && pendingRemoveCourse) {
+        const res = await fetch(`/record/${userid}/remove/${pendingRemoveCourse}`, { method: "DELETE" });
+        const result = await res.json();
+        if (result.message) {
+          showNotification(result.message, "success");
+        } else {
+          showNotification(result.error || "Error removing course", "error");
+        }
+        fetchDetails();
+      }
+      pendingRemoveCourse = null;
+    }
+
+    // Logout function: clear userid and redirect to login
+    function logout() {
+      localStorage.removeItem("userid");
+      window.location.href = "/";
+    }
+
+    // Initial fetch of student details when page loads
+    fetchDetails();
+  </script>
+</body>
+</html>

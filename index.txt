@@ -1,0 +1,10 @@
+100,John Sena,Physics:95,Maths:80,Hindi:85
+200,Madhur,History:56,Maths:35
+300,Yash,Geography:85,Sanskrit:96
+400,Sai,Economics:76,English:89,Maths:95
+500,Utkarsh,Ethics:75,Electronics:90,Electrical:95
+600,Kaif,Biology:84
+700,Prince,Maths:89,Physics:94
+800,Pushpa
+900,Shlok,Chemistry:98
+1000,Santosh,EVS:83,Electronics:90

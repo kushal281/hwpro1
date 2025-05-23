@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Records Login</title>
+  <!-- Viewport for mobile responsiveness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col items-center justify-center p-2">
+
+  <!-- Notification bar centered on screen -->
+  <div id="notification" class="fixed inset-0 flex items-center justify-center z-50 hidden"></div>
+
+  <!-- Main container for the login form -->
+  <div class="bg-white shadow-md rounded-xl p-6 w-full max-w-xs sm:max-w-sm mt-10 sm:mt-20">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Login</h2>
+    <div class="flex flex-col gap-4">
+      <input id="userid" placeholder="User ID" class="border p-3 rounded w-full text-base" autocomplete="username" />
+      <input id="pass" type="password" placeholder="Password" class="border p-3 rounded w-full text-base" autocomplete="current-password" />
+      <button onclick="login()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded w-full text-base font-semibold transition">
+        Login
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Show notification bar centered with message and color
+    function showNotification(message, type = "info") {
+      const notification = document.getElementById("notification");
+      let bgColor = "bg-blue-500";
+      if (type === "success") bgColor = "bg-green-500";
+      else if (type === "error") bgColor = "bg-red-500";
+      notification.innerHTML = `
+        <div class="${bgColor} px-6 py-4 rounded shadow text-white text-center text-base font-medium max-w-xs w-full">
+          ${message}
+        </div>
+      `;
+      notification.className = "fixed inset-0 flex items-center justify-center z-50";
+      notification.classList.remove("hidden");
+      setTimeout(() => {
+        notification.classList.add("hidden");
+      }, 2500);
+    }
+
+    // Login function: sends credentials to server and handles response
+    async function login() {
+      const userid = document.getElementById("userid").value;
+      const pass = document.getElementById("pass").value;
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userid: parseInt(userid), password: pass })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("userid", userid);
+        window.location.href = "/options";
+      } else {
+        showNotification(data.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>
