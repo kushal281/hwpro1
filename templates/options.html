@@ -99,22 +99,23 @@
         document.getElementById("studentInfo").innerHTML = html;
       }
     }
-    
+
     // Add a new course for the student
     async function addCourse() {
       const course = document.getElementById("courseName").value.trim();
       const gradeStr = document.getElementById("courseGrade").value.trim();
 
       // Check if grade is a valid integer between 0 and 100
-      const grade = Number(gradeStr);
       if (!course) {
         showNotification("Course name cannot be empty.", "error");
         return;
       }
-      if (!/^\d+$/.test(gradeStr) || grade < 0 || grade > 100) {
+      if (!/^\d+$/.test(gradeStr) || Number(gradeStr) < 0 || Number(gradeStr) > 100) {
         showNotification("Grade must be a number between 0 and 100.", "error");
         return;
       }
+
+      const grade = Number(gradeStr);
 
       const res = await fetch(`/record/${userid}/add`, {
         method: "POST",
@@ -129,6 +130,14 @@
       }
       fetchDetails();
     }
+
+    // Trigger addCourse on Enter in either input
+    document.getElementById("courseName").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") addCourse();
+    });
+    document.getElementById("courseGrade").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") addCourse();
+    });
 
     // Remove a course for the student with custom confirmation
     async function removeCourse(course) {

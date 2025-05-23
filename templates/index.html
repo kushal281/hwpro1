@@ -46,8 +46,19 @@
 
     // Login function: sends credentials to server and handles response
     async function login() {
-      const userid = document.getElementById("userid").value;
-      const pass = document.getElementById("pass").value;
+      const userid = document.getElementById("userid").value.trim();
+      const pass = document.getElementById("pass").value.trim();
+
+      // Input validation: check for non-empty fields
+      if (!userid) {
+        showNotification("User ID cannot be empty.", "error");
+        return;
+      }
+      if (!pass) {
+        showNotification("Password cannot be empty.", "error");
+        return;
+      }
+
       const res = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,6 +72,14 @@
         showNotification(data.message, "error");
       }
     }
+
+    // Trigger login on Enter key in either input
+    document.getElementById("userid").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") login();
+    });
+    document.getElementById("pass").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") login();
+    });
   </script>
 </body>
 </html>
